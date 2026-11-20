@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Electric Guitar — Combo Tab & Editor</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #141822;
+    --panel-2: #1b202d;
+    --border: #2a3142;
+    --text: #eef2ff;
+    --muted: #8f9bb3;
+    --accent: #ff5722;
+    --accent-glow: rgba(255, 87, 34, 0.55);
+    --cyan: #22d3ee;
+    --amber: #fbbf24;
+    --green: #22c55e;
+    --wood-1: #231712;
+    --wood-2: #18100c;
+    --fret-wire: #9ca3af;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at 50% 0%, #181d2b 0%, var(--bg) 70%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 18px;
+    user-select: none;
+  }
+
+  .app {
+    max-width: 1340px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Amp Rack */
+  .amp-rack {
+    background: linear-gradient(180deg, #1b202e 0%, #12151e 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .led {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 10px #ef4444;
+    transition: 0.2s;
+  }
+  .led.on {
+    background: var(--green);
+    box-shadow: 0 0 12px var(--green);
+  }
+  .brand h1 {
+    margin: 0;
+    font-size: 1.12rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+  .brand span {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 11px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn:hover { border-color: #4b5563; background: #242b3d; }
+  .btn.active {
+    background: var(--accent);
+    border-color: #ff784e;
+    color: #fff;
+    box-shadow: 0 0 14px var(--accent-glow);
+  }
+  .btn.cyan.active {
+    background: #0891b2;
+    border-color: var(--cyan);
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.45);
+  }
+  .btn.green.active {
+    background: #15803d;
+    border-color: var(--green);
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+  }
+  .btn.red {
+    border-color: #7f1d1d;
+    color: #fca5a5;
+  }
+  .btn.red:hover { background: #450a0a; border-color: #ef4444; }
+
+  .knobs {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .knob-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 86px;
+  }
+  .knob-group label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+  }
+  .knob-group input[type="range"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+    height: 5px;
+  }
+
+  /* HUD */
+  .hud {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1.2fr;
+    gap: 14px;
+  }
+  @media (max-width: 920px) {
+    .hud { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+  }
+  .combo-guide { display: flex; flex-direction: column; gap: 7px; }
+  .guide-title {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--amber);
+    font-weight: 800;
+  }
+  .keys-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.84rem;
+    color: #cbd5e1;
+  }
+  kbd {
+    background: #0d1017;
+    border: 1px solid #384152;
+    border-bottom-width: 3px;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  kbd.lit {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  .now-playing {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .stat-val {
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: ui-monospace, monospace;
+    margin-top: 2px;
+  }
+  .stat-val.accent { color: var(--accent); text-shadow: 0 0 14px var(--accent-glow); }
+  .stat-val.cyan { color: var(--cyan); }
+
+  .string-selector { display: flex; flex-direction: column; gap: 8px; }
+  .string-pills {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  .str-pill {
+    background: #0d1017;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.12s;
+  }
+  .str-pill .s-name { font-weight: 800; font-size: 0.95rem; display: block; }
+  .str-pill .s-key { font-size: 0.66rem; color: var(--muted); }
+  .str-pill.active {
+    border-color: var(--cyan);
+    background: rgba(34, 211, 238, 0.12);
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.25);
+  }
+  .str-pill.active .s-name { color: var(--cyan); }
+
+  /* Fretboard */
+  .fretboard-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    overflow-x: auto;
+  }
+  .fretboard {
+    position: relative;
+    min-width: 1050px;
+    background: linear-gradient(180deg, var(--wood-1) 0%, var(--wood-2) 100%);
+    border: 2px solid #3a2a20;
+    border-radius: 8px;
+    padding: 10px 0 22px 0;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.75);
+  }
+  .fret-grid {
+    display: grid;
+    grid-template-columns: 52px repeat(24, 1fr);
+    position: relative;
+  }
+  .fret-numbers {
+    display: grid;
+    grid-template-columns: 52px repeat(24, 1fr);
+    margin-top: 6px;
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+    text-align: center;
+  }
+  .fret-num.hi { color: var(--amber); font-weight: 800; }
+  .string-row { display: contents; }
+
+  .fret-cell {
+    position: relative;
+    height: 30px;
+    border-right: 2px solid var(--fret-wire);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .fret-cell.nut {
+    border-right: 5px solid #e5e7eb;
+    background: rgba(0,0,0,0.35);
+  }
+  .fret-cell.tens-zone { background: rgba(251, 191, 36, 0.08); }
+  .fret-cell:hover { background: rgba(255,255,255,0.06); }
+
+  .fret-cell::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(180deg, #e5e7eb, #9ca3af);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    pointer-events: none;
+  }
+  .s0 .fret-cell::before { height: 1.5px; }
+  .s1 .fret-cell::before { height: 2px; }
+  .s2 .fret-cell::before { height: 2.5px; }
+  .s3 .fret-cell::before { height: 3px; background: linear-gradient(180deg, #d6b88d, #8a6d43); }
+  .s4 .fret-cell::before { height: 3.6px; background: linear-gradient(180deg, #d6b88d, #8a6d43); }
+  .s5 .fret-cell::before { height: 4.3px; background: linear-gradient(180deg, #d6b88d, #8a6d43); }
+
+  .string-active .fret-cell::before { box-shadow: 0 0 8px var(--cyan); }
+  .string-vibrating .fret-cell::before {
+    animation: vibrate 0.07s infinite alternate;
+    box-shadow: 0 0 10px var(--accent);
+  }
+  @keyframes vibrate {
+    from { transform: translateY(calc(-50% - 1.2px)); }
+    to { transform: translateY(calc(-50% + 1.2px)); }
+  }
+
+  .note-dot {
+    position: relative;
+    z-index: 2;
+    width: 23px;
+    height: 23px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 16px var(--accent);
+    transform: scale(0);
+    transition: transform 0.06s ease-out;
+    pointer-events: none;
+  }
+  .fret-cell.hit .note-dot { transform: scale(1); }
+
+  .inlay {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  /* TAB EDITOR & IMPORTER */
+  .tab-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .tab-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .toolbar-left, .toolbar-right {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .bpm-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #0d1017;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.76rem;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .bpm-box input { width: 85px; accent-color: var(--cyan); cursor: pointer; }
+  .bpm-box span { color: var(--cyan); min-width: 54px; font-family: ui-monospace, monospace; }
+
+  .view-tabs {
+    display: inline-flex;
+    background: #0b0e14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .view-tab {
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    padding: 5px 12px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .view-tab.active {
+    background: var(--panel-2);
+    color: var(--cyan);
+  }
+
+  /* Visual Grid Editor */
+  .grid-editor-wrap {
+    border: 1px solid #222836;
+    background: #090b10;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .grid-scroll {
+    overflow-x: auto;
+    padding: 10px 0 12px 0;
+  }
+  .tab-grid {
+    display: grid;
+    width: max-content;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .g-sticky-lbl {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    background: #0d111a;
+    border-right: 2px solid #334155;
+    width: 34px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.82rem;
+    color: var(--cyan);
+  }
+  .g-sticky-lbl.head {
+    color: var(--muted);
+    font-size: 0.68rem;
+    height: 22px;
+  }
+
+  .g-col-head {
+    width: 24px;
+    height: 22px;
+    font-size: 0.65rem;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-bottom: 1px solid #182030;
+  }
+  .g-col-head:hover { color: var(--amber); background: rgba(251,191,36,0.08); }
+  .g-col-head.playhead {
+    background: rgba(255, 87, 34, 0.35);
+    color: #fff;
+    font-weight: 800;
+  }
+
+  .g-cell {
+    position: relative;
+    width: 24px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .g-cell::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 1px;
+    background: #232c3f;
+    pointer-events: none;
+  }
+  .g-cell:hover { background: rgba(34, 211, 238, 0.1); }
+  .g-cell.playhead { background: rgba(255, 87, 34, 0.16); }
+  .g-cell.selected { outline: 1px solid var(--cyan); background: rgba(34, 211, 238, 0.16); z-index: 3; }
+
+  .g-note {
+    position: relative;
+    z-index: 2;
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: #f8fafc;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    height: 20px;
+    min-width: 20px;
+    padding: 0 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .g-note.two-digit {
+    position: absolute;
+    left: 2px;
+    min-width: 42px;
+    z-index: 3;
+  }
+  .g-cell.playhead .g-note {
+    background: var(--accent);
+    border-color: #ff8a65;
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .g-cell.trailing::after {
+    content: '';
+    position: relative;
+    z-index: 1;
+  }
+
+  .g-inline-input {
+    position: relative;
+    z-index: 5;
+    width: 34px;
+    height: 22px;
+    background: #0f172a;
+    color: #fff;
+    border: 1px solid var(--cyan);
+    border-radius: 4px;
+    text-align: center;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    outline: none;
+    padding: 0;
+  }
+
+  /* ASCII Text Editor */
+  .ascii-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tab-textarea {
+    width: 100%;
+    min-height: 148px;
+    background: #090b10;
+    border: 1px solid #262e40;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92rem;
+    line-height: 1.48;
+    color: #a5f3fc;
+    resize: vertical;
+    outline: none;
+    white-space: pre;
+    overflow-x: auto;
+    user-select: text;
+  }
+  .tab-textarea:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.16);
+  }
+
+  .editor-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.76rem;
+    color: var(--muted);
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- AMP RACK -->
+  <div class="amp-rack">
+    <div class="brand">
+      <div class="led" id="audioLed"></div>
+      <div>
+        <h1>Volt-6 Electric Guitar</h1>
+        <span id="audioStatus">Press any key or click Play to power on amp</span>
+      </div>
+    </div>
+
+    <div class="presets">
+      <button class="btn active" data-preset="metal">High-Gain Metal</button>
+      <button class="btn" data-preset="crunch">Rock Crunch</button>
+      <button class="btn" data-preset="lead">Solo Lead</button>
+      <button class="btn" data-preset="clean">Clean Twin</button>
+      <button class="btn cyan" id="palmMuteBtn" title="Shortcut: M">Palm Mute (M)</button>
+    </div>
+
+    <div class="knobs">
+      <div class="knob-group">
+        <label>Drive <span id="driveVal">78%</span></label>
+        <input type="range" id="drive" min="0" max="100" value="78" />
+      </div>
+      <div class="knob-group">
+        <label>Tone <span id="toneVal">68%</span></label>
+        <input type="range" id="tone" min="0" max="100" value="68" />
+      </div>
+      <div class="knob-group">
+        <label>Reverb <span id="reverbVal">25%</span></label>
+        <input type="range" id="reverb" min="0" max="100" value="25" />
+      </div>
+      <div class="knob-group">
+        <label>Volume <span id="volVal">75%</span></label>
+        <input type="range" id="volume" min="0" max="100" value="75" />
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="card combo-guide">
+      <div class="guide-title">Combo Controls (Example: e|--19-19-19-19-19)</div>
+      <div class="keys-row">
+        1. String <kbd id="kbdE">E</kbd> &rarr;
+        2. Hold tens <kbd id="kbd1">1</kbd> (or <kbd id="kbd2">2</kbd>) &rarr;
+        3. Spam <kbd id="kbd9">9</kbd> 5x!
+      </div>
+      <div class="keys-row" style="font-size:0.76rem; color:#94a3b8;">
+        Top numbers &amp; Numpad supported &bull;
+        <kbd>Space</kbd> re-pick &bull; <kbd>X</kbd> mute all &bull;
+        Turn <strong>Rec Keys</strong> on to write into TAB
+      </div>
+    </div>
+
+    <div class="card now-playing">
+      <div>
+        <div class="stat-label">String</div>
+        <div class="stat-val cyan" id="hudString">e (1st)</div>
+      </div>
+      <div>
+        <div class="stat-label">Fret / Tens</div>
+        <div class="stat-val accent" id="hudFret">--</div>
+      </div>
+      <div>
+        <div class="stat-label">Note</div>
+        <div class="stat-val" id="hudNote">--</div>
+      </div>
+    </div>
+
+    <div class="card string-selector">
+      <div class="stat-label">Active String (Click or Press Key)</div>
+      <div class="string-pills" id="stringPills"></div>
+    </div>
+  </div>
+
+  <!-- 24-FRET NECK -->
+  <div class="fretboard-wrap">
+    <div class="fretboard">
+      <div class="fret-grid" id="fretGrid"></div>
+      <div class="fret-numbers" id="fretNumbers"></div>
+    </div>
+  </div>
+
+  <!-- TAB IMPORTER & EDITOR -->
+  <div class="tab-panel">
+    <div class="tab-toolbar">
+      <div class="toolbar-left">
+        <span class="guide-title" style="color:var(--cyan); margin-right:4px;">TAB Importer &amp; Editor</span>
+        <div class="view-tabs">
+          <button class="view-tab active" data-view="both">Split View</button>
+          <button class="view-tab" data-view="grid">Visual Grid</button>
+          <button class="view-tab" data-view="text">ASCII / Paste</button>
+        </div>
+        <button class="btn active" id="playTabBtn">&#9654; Play TAB</button>
+        <button class="btn hidden" id="stopTabBtn">&#9632; Stop</button>
+        <button class="btn cyan" id="loopBtn">Loop</button>
+        <div class="bpm-box">
+          BPM <input type="range" id="bpmSlider" min="40" max="220" value="115" />
+          <span id="bpmVal">115 BPM</span>
+        </div>
+      </div>
+
+      <div class="toolbar-right">
+        <button class="btn green" id="recBtn" title="Record keyboard/fretboard plays into the TAB">Rec Keys: OFF</button>
+        <button class="btn" id="addColsBtn">+8 Cols</button>
+        <button class="btn" id="importFocusBtn">Paste / Import</button>
+        <button class="btn" id="uploadFileBtn">Import .txt</button>
+        <input type="file" id="fileInput" accept=".txt,.tab,text/plain" hidden />
+        <button class="btn" id="sampleRiffBtn">Load Riff</button>
+        <button class="btn" id="copyTabBtn">Copy</button>
+        <button class="btn red" id="clearTabBtn">Clear</button>
+      </div>
+    </div>
+
+    <!-- VISUAL GRID EDITOR -->
+    <div class="grid-editor-wrap" id="gridWrap">
+      <div class="grid-scroll" id="gridScroll">
+        <div class="tab-grid" id="tabGrid"></div>
+      </div>
+    </div>
+
+    <!-- ASCII TEXT EDITOR / IMPORTER -->
+    <div class="ascii-wrap" id="asciiWrap">
+      <textarea
+        id="tabTextarea"
+        class="tab-textarea"
+        spellcheck="false"
+        placeholder="Paste any 6-line ASCII guitar tab here, e.g.&#10;e|-19----19----19----19----21----21----------------&#10;B|-------------------------------------------------&#10;G|----16----16----16----16----18----18-18----18----&#10;D|-------------------------------------------------&#10;A|----------------------------------------16----16-&#10;E|-------------------------------------------------"
+      ></textarea>
+      <div class="editor-footer">
+        <span id="parseInfo">Ready</span>
+        <span>Tip: Click a cell in the Visual Grid to type a fret (0–24), use Arrow keys to move, Delete/Backspace to clear, or click a column number above to play from there.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const STRINGS = [
+    { index: 0, label: 'e', desc: '1st', keyHint: 'E',     freq: 329.6276, midi: 64 },
+    { index: 1, label: 'B', desc: '2nd', keyHint: 'B',     freq: 246.9417, midi: 59 },
+    { index: 2, label: 'G', desc: '3rd', keyHint: 'G',     freq: 195.9977, midi: 55 },
+    { index: 3, label: 'D', desc: '4th', keyHint: 'D',     freq: 146.8324, midi: 50 },
+    { index: 4, label: 'A', desc: '5th', keyHint: 'A',     freq: 110.0000, midi: 45 },
+    { index: 5, label: 'E', desc: '6th', keyHint: 'L/⇧E',  freq:  82.4069, midi: 40 }
+  ];
+
+  const DEFAULT_RIFF = [
+    'e|-19----19----19----19----21----21----------------',
+    'B|-------------------------------------------------',
+    'G|----16----16----16----16----18----18-18----18----',
+    'D|-------------------------------------------------',
+    'A|----------------------------------------16----16-',
+    'E|-------------------------------------------------'
+  ].join('\n');
+
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const INLAY_FRETS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21, 24]);
+
+  // Guitar Playing State
+  let activeString = 0;
+  let lastFret = 19;
+  let palmMute = false;
+  let heldTens = null;
+  let heldZero = false;
+  let tensUsedAsModifier = false;
+  let pendingSeqTens = null;
+  let pendingSeqTimer = null;
+
+  // TAB Editor Data Model: grid[0..5][col] = null | number (0..24)
+  let tabColsCount = 49;
+  let tabGridData = Array.from({ length: 6 }, () => []);
+  let selectedCell = null; // { s, c }
+  let recordKeys = false;
+
+  // Playback State
+  let isPlaying = false;
+  let loopTab = false;
+  let playTimer = null;
+  let playheadCol = -1;
+  let bpm = 115;
+
+  // Audio Engine
+  let ctx = null;
+  let preAmpGain, shaper, cabLowpass, cabHighpass, cabPeak, toneFilter, masterGain, reverbSend, reverbNode;
+  const activeVoices = new Array(6).fill(null);
+
+  const presets = {
+    metal:  { drive: 85, tone: 74, reverb: 22, volume: 75 },
+    crunch: { drive: 52, tone: 62, reverb: 28, volume: 78 },
+    lead:   { drive: 78, tone: 66, reverb: 48, volume: 76 },
+    clean:  { drive: 10, tone: 70, reverb: 38, volume: 85 }
+  };
+
+  // DOM
+  const audioLed = document.getElementById('audioLed');
+  const audioStatus = document.getElementById('audioStatus');
+  const hudString = document.getElementById('hudString');
+  const hudFret = document.getElementById('hudFret');
+  const hudNote = document.getElementById('hudNote');
+  const stringPillsEl = document.getElementById('stringPills');
+  const fretGridEl = document.getElementById('fretGrid');
+  const fretNumbersEl = document.getElementById('fretNumbers');
+
+  const driveSlider = document.getElementById('drive');
+  const toneSlider = document.getElementById('tone');
+  const reverbSlider = document.getElementById('reverb');
+  const volumeSlider = document.getElementById('volume');
+
+  const tabGridEl = document.getElementById('tabGrid');
+  const gridScrollEl = document.getElementById('gridScroll');
+  const tabTextarea = document.getElementById('tabTextarea');
+  const parseInfoEl = document.getElementById('parseInfo');
+  const gridWrap = document.getElementById('gridWrap');
+  const asciiWrap = document.getElementById('asciiWrap');
+
+  const playTabBtn = document.getElementById('playTabBtn');
+  const stopTabBtn = document.getElementById('stopTabBtn');
+  const loopBtn = document.getElementById('loopBtn');
+  const recBtn = document.getElementById('recBtn');
+  const bpmSlider = document.getElementById('bpmSlider');
+  const bpmVal = document.getElementById('bpmVal');
+
+  // ================= AUDIO ENGINE =================
+  function makeDistortionCurve(amount) {
+    const k = amount * 2.4;
+    const samples = 2048;
+    const curve = new Float32Array(samples);
+    for (let i = 0; i < samples; i++) {
+      const x = (i * 2) / samples - 1;
+      if (k <= 1) curve[i] = x;
+      else {
+        const bias = x + 0.08;
+        curve[i] = Math.tanh(bias * (1 + k * 0.14)) - Math.tanh(0.08 * (1 + k * 0.14));
+      }
+    }
+    return curve;
+  }
+
+  function createImpulseResponse(audioCtx, seconds = 1.6, decay = 2.8) {
+    const rate = audioCtx.sampleRate;
+    const length = Math.floor(rate * seconds);
+    const impulse = audioCtx.createBuffer(2, length, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+      }
+    }
+    return impulse;
+  }
+
+  function initAudio() {
+    if (!ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      ctx = new AudioCtx();
+
+      preAmpGain = ctx.createGain();
+      shaper = ctx.createWaveShaper();
+      shaper.oversample = '4x';
+
+      cabHighpass = ctx.createBiquadFilter();
+      cabHighpass.type = 'highpass';
+      cabHighpass.frequency.value = 88;
+
+      cabPeak = ctx.createBiquadFilter();
+      cabPeak.type = 'peaking';
+      cabPeak.frequency.value = 2150;
+      cabPeak.Q.value = 1.4;
+      cabPeak.gain.value = 4.5;
+
+      cabLowpass = ctx.createBiquadFilter();
+      cabLowpass.type = 'lowpass';
+      cabLowpass.frequency.value = 4400;
+      cabLowpass.Q.value = 0.85;
+
+      toneFilter = ctx.createBiquadFilter();
+      toneFilter.type = 'lowpass';
+
+      masterGain = ctx.createGain();
+      reverbNode = ctx.createConvolver();
+      reverbNode.buffer = createImpulseResponse(ctx, 1.8, 3.0);
+      reverbSend = ctx.createGain();
+
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.value = -14;
+      compressor.ratio.value = 4;
+
+      preAmpGain.connect(shaper);
+      shaper.connect(cabHighpass);
+      cabHighpass.connect(cabPeak);
+      cabPeak.connect(cabLowpass);
+      cabLowpass.connect(toneFilter);
+
+      toneFilter.connect(compressor);
+      toneFilter.connect(reverbSend);
+      reverbSend.connect(reverbNode);
+      reverbNode.connect(compressor);
+
+      compressor.connect(masterGain);
+      masterGain.connect(ctx.destination);
+
+      updateAmpParams();
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    audioLed.classList.add('on');
+    audioStatus.textContent = 'Amp Online — Ready to Shred';
+  }
+
+  function updateAmpParams() {
+    const d = Number(driveSlider.value);
+    const t = Number(toneSlider.value);
+    const r = Number(reverbSlider.value);
+    const v = Number(volumeSlider.value);
+
+    document.getElementById('driveVal').textContent = d + '%';
+    document.getElementById('toneVal').textContent = t + '%';
+    document.getElementById('reverbVal').textContent = r + '%';
+    document.getElementById('volVal').textContent = v + '%';
+
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    preAmpGain.gain.setTargetAtTime(0.6 + (d / 100) * 4.8, now, 0.02);
+    shaper.curve = makeDistortionCurve(d);
+    toneFilter.frequency.setTargetAtTime(1100 + (t / 100) * 4200, now, 0.02);
+    reverbSend.gain.setTargetAtTime((r / 100) * 0.45, now, 0.02);
+    masterGain.gain.setTargetAtTime((v / 100) * 0.72, now, 0.02);
+  }
+
+  function stopVoice(stringIdx, fadeTime = 0.014) {
+    const v = activeVoices[stringIdx];
+    if (!v || !ctx) return;
+    const now = ctx.currentTime;
+    try {
+      v.env.gain.cancelScheduledValues(now);
+      v.env.gain.setValueAtTime(Math.max(v.env.gain.value, 0.0001), now);
+      v.env.gain.exponentialRampToValueAtTime(0.0001, now + fadeTime);
+      v.oscs.forEach(o => o.stop(now + fadeTime + 0.02));
+    } catch (_) {}
+    activeVoices[stringIdx] = null;
+  }
+
+  function muteAllStrings() {
+    for (let i = 0; i < 6; i++) stopVoice(i, 0.02);
+  }
+
+  function playNote(stringIdx, fret, allowRecord = true) {
+    initAudio();
+    const s = STRINGS[stringIdx];
+    if (!s || fret < 0 || fret > 24) return;
+
+    stopVoice(stringIdx, 0.012);
+
+    const now = ctx.currentTime;
+    const freq = s.freq * Math.pow(2, fret / 12);
+    const decayTime = palmMute ? 0.24 : Math.max(1.3, 3.2 - fret * 0.05);
+
+    const env = ctx.createGain();
+    const filterEnv = ctx.createBiquadFilter();
+    filterEnv.type = 'lowpass';
+    filterEnv.Q.value = palmMute ? 2.2 : 1.5;
+
+    const startCutoff = palmMute ? 1500 : Math.min(7500, freq * 6.5);
+    const endCutoff = palmMute ? 480 : Math.min(2600, freq * 2.6);
+    filterEnv.frequency.setValueAtTime(startCutoff, now);
+    filterEnv.frequency.exponentialRampToValueAtTime(Math.max(180, endCutoff), now + (palmMute ? 0.07 : 0.22));
+
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(freq * 1.006, now);
+    osc1.frequency.exponentialRampToValueAtTime(freq, now + 0.025);
+
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(freq * 0.997, now);
+    const osc2Gain = ctx.createGain();
+    osc2Gain.gain.value = 0.45;
+
+    const osc3 = ctx.createOscillator();
+    osc3.type = 'triangle';
+    osc3.frequency.setValueAtTime(freq, now);
+    const osc3Gain = ctx.createGain();
+    osc3Gain.gain.value = 0.55;
+
+    const noiseLen = Math.floor(ctx.sampleRate * 0.022);
+    const noiseBuf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+    const noiseData = noiseBuf.getChannelData(0);
+    for (let i = 0; i < noiseLen; i++) {
+      noiseData[i] = (Math.random() * 2 - 1) * (1 - i / noiseLen);
+    }
+    const noiseSrc = ctx.createBufferSource();
+    noiseSrc.buffer = noiseBuf;
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = 2800;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.55;
+
+    env.gain.setValueAtTime(0.001, now);
+    env.gain.linearRampToValueAtTime(palmMute ? 0.55 : 0.46, now + 0.005);
+    env.gain.exponentialRampToValueAtTime(0.24, now + 0.09);
+    env.gain.exponentialRampToValueAtTime(0.0001, now + decayTime);
+
+    osc1.connect(filterEnv);
+    osc2.connect(osc2Gain); osc2Gain.connect(filterEnv);
+    osc3.connect(osc3Gain); osc3Gain.connect(filterEnv);
+    noiseSrc.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(filterEnv);
+
+    filterEnv.connect(env);
+    env.connect(preAmpGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc3.start(now);
+    noiseSrc.start(now);
+
+    osc1.stop(now + decayTime + 0.05);
+    osc2.stop(now + decayTime + 0.05);
+    osc3.stop(now + decayTime + 0.05);
+
+    activeVoices[stringIdx] = { env, oscs: [osc1, osc2, osc3] };
+
+    lastFret = fret;
+    updateHUD(stringIdx, fret);
+    flashFret(stringIdx, fret);
+
+    if (allowRecord && recordKeys) {
+      recordNoteIntoTab(stringIdx, fret);
+    }
+  }
+
+  function midiToNoteName(midi) {
+    return NOTE_NAMES[midi % 12] + (Math.floor(midi / 12) - 1);
+  }
+
+  function updateHUD(stringIdx, fret = null) {
+    const s = STRINGS[stringIdx];
+    hudString.textContent = `${s.label} (${s.desc})`;
+
+    document.querySelectorAll('.str-pill').forEach((el, i) => {
+      el.classList.toggle('active', i === stringIdx);
+    });
+    document.querySelectorAll('.string-row').forEach((el, i) => {
+      el.classList.toggle('string-active', i === stringIdx);
+    });
+
+    if (fret !== null) {
+      hudFret.textContent = String(fret);
+      hudNote.textContent = midiToNoteName(s.midi + fret);
+    } else if (heldTens !== null) {
+      hudFret.textContent = heldTens + '_';
+    }
+  }
+
+  function highlightTensZone() {
+    document.querySelectorAll('.fret-cell').forEach(cell => {
+      const f = Number(cell.dataset.fret);
+      const inZone = (heldTens === 1 && f >= 10 && f <= 19) || (heldTens === 2 && f >= 20 && f <= 24);
+      cell.classList.toggle('tens-zone', inZone);
+    });
+    document.getElementById('kbd1').classList.toggle('lit', heldTens === 1);
+    document.getElementById('kbd2').classList.toggle('lit', heldTens === 2);
+  }
+
+  function flashFret(stringIdx, fret) {
+    const cell = document.querySelector(`.fret-cell[data-string="${stringIdx}"][data-fret="${fret}"]`);
+    const row = document.querySelector(`.string-row[data-string="${stringIdx}"]`);
+    if (cell) {
+      cell.classList.add('hit');
+      clearTimeout(cell._hitTimer);
+      cell._hitTimer = setTimeout(() => cell.classList.remove('hit'), 260);
+    }
+    if (row) {
+      row.classList.add('string-vibrating');
+      clearTimeout(row._vibTimer);
+      row._vibTimer = setTimeout(() => row.classList.remove('string-vibrating'), 280);
+    }
+  }
+
+  // ================= TAB PARSER, SERIALIZER & EDITOR =================
+  function parseAsciiTab(rawText) {
+    const rawLines = rawText.replace(/\r/g, '').split('\n');
+    const blocks = [];
+    let currentBlock = [];
+
+    const isTabLine = (line) => {
+      const t = line.trim();
+      if (!t) return false;
+      // Looks like guitar tab: has dashes or pipes with digits/tab chars
+      const hasTabChars = (t.match(/[-|0-9hp\/\\~xb]/gi) || []).length >= Math.max(4, t.length * 0.5);
+      return hasTabChars && (t.includes('-') || t.includes('|'));
+    };
+
+    for (const line of rawLines) {
+      if (isTabLine(line)) {
+        currentBlock.push(line);
+        if (currentBlock.length === 6) {
+          blocks.push(currentBlock);
+          currentBlock = [];
+        }
+      } else if (currentBlock.length > 0 && line.trim() === '') {
+        // Incomplete block separated by blank line; discard or pad if >= 2
+        if (currentBlock.length >= 2) {
+          while (currentBlock.length < 6) currentBlock.push('-'.repeat(currentBlock[0].length));
+          blocks.push(currentBlock);
+        }
+        currentBlock = [];
+      }
+    }
+    if (currentBlock.length >= 2) {
+      while (currentBlock.length < 6) currentBlock.push('-'.repeat(currentBlock[0].length));
+      blocks.push(currentBlock);
+    }
+
+    if (blocks.length === 0) {
+      return { cols: 24, grid: Array.from({ length: 6 }, () => new Array(24).fill(null)), noteCount: 0, blocks: 0 };
+    }
+
+    const mergedGrid = Array.from({ length: 6 }, () => []);
+    let noteCount = 0;
+
+    for (const block of blocks) {
+      // Strip leading string label up to first '|' (if consistent)
+      const cleaned = block.map(l => {
+        const pipeIdx = l.indexOf('|');
+        if (pipeIdx !== -1 && pipeIdx <= 4) {
+          let body = l.slice(pipeIdx + 1);
+          if (body.endsWith('|')) body = body.slice(0, -1);
+          return body;
+        }
+        return l.replace(/^[eEbBgGdDaA]\s*[:|]?\s*/, '');
+      });
+
+      const blockLen = Math.max(1, ...cleaned.map(l => l.length));
+      const blockGrid = Array.from({ length: 6 }, () => new Array(blockLen).fill(null));
+      const skip = new Array(6).fill(-1);
+
+      for (let c = 0; c < blockLen; c++) {
+        for (let s = 0; s < 6; s++) {
+          if (c <= skip[s]) continue;
+          const ch = cleaned[s][c] || '-';
+          if (ch >= '0' && ch <= '9') {
+            const next = cleaned[s][c + 1] || '-';
+            let fret;
+            if (next >= '0' && next <= '9') {
+              const two = Number(ch + next);
+              if (two <= 24) {
+                fret = two;
+                skip[s] = c + 1;
+              } else {
+                fret = Number(ch);
+              }
+            } else {
+              fret = Number(ch);
+            }
+            blockGrid[s][c] = fret;
+            noteCount++;
+          }
+        }
+      }
+
+      for (let s = 0; s < 6; s++) {
+        mergedGrid[s].push(...blockGrid[s]);
+      }
+    }
+
+    return {
+      cols: mergedGrid[0].length,
+      grid: mergedGrid,
+      noteCount,
+      blocks: blocks.length
+    };
+  }
+
+  function serializeGridToAscii(grid, colsCount) {
+    const lines = [];
+    for (let s = 0; s < 6; s++) {
+      let row = STRINGS[s].label + '|';
+      for (let c = 0; c < colsCount; c++) {
+        const val = grid[s][c];
+        if (val !== null && val !== undefined) {
+          const str = String(val);
+          row += str;
+          if (str.length === 2 && c + 1 < colsCount) {
+            // Two-digit fret occupies c and c+1 unless c+1 has a note on the same string
+            if (grid[s][c + 1] === null || grid[s][c + 1] === undefined) {
+              c++; // consume trailing slot naturally
+            }
+          }
+        } else {
+          row += '-';
+        }
+      }
+      lines.push(row);
+    }
+    return lines.join('\n');
+  }
+
+  function setGridFromAscii(text, updateTextarea = false) {
+    const parsed = parseAsciiTab(text);
+    tabColsCount = Math.max(16, parsed.cols);
+    tabGridData = Array.from({ length: 6 }, (_, s) => {
+      const arr = new Array(tabColsCount).fill(null);
+      for (let c = 0; c < parsed.cols; c++) arr[c] = parsed.grid[s][c];
+      return arr;
+    });
+    if (updateTextarea) {
+      tabTextarea.value = text;
+    }
+    parseInfoEl.textContent = `Parsed ${parsed.noteCount} note${parsed.noteCount === 1 ? '' : 's'} across ${tabColsCount} columns` +
+      (parsed.blocks > 1 ? ` (${parsed.blocks} stanzas)` : '');
+    renderVisualGrid();
+  }
+
+  function syncTextareaFromGrid() {
+    const ascii = serializeGridToAscii(tabGridData, tabColsCount);
+    tabTextarea.value = ascii;
+    let count = 0;
+    for (let s = 0; s < 6; s++) {
+      for (let c = 0; c < tabColsCount; c++) {
+        if (tabGridData[s][c] !== null) count++;
+      }
+    }
+    parseInfoEl.textContent = `${count} note${count === 1 ? '' : 's'} across ${tabColsCount} columns`;
+  }
+
+  function renderVisualGrid() {
+    tabGridEl.innerHTML = '';
+    tabGridEl.style.gridTemplateColumns = `34px repeat(${tabColsCount}, 24px)`;
+
+    // Header row (column numbers)
+    const corner = document.createElement('div');
+    corner.className = 'g-sticky-lbl head';
+    corner.textContent = '#';
+    tabGridEl.appendChild(corner);
+
+    for (let c = 0; c < tabColsCount; c++) {
+      const ch = document.createElement('div');
+      ch.className = 'g-col-head' + (c === playheadCol ? ' playhead' : '');
+      ch.dataset.col = c;
+      ch.textContent = (c % 3 === 0 || c === 0) ? c : '·';
+      ch.title = `Click to play from column ${c}`;
+      ch.addEventListener('click', () => startPlayback(c));
+      tabGridEl.appendChild(ch);
+    }
+
+    // 6 string rows
+    for (let s = 0; s < 6; s++) {
+      const lbl = document.createElement('div');
+      lbl.className = 'g-sticky-lbl';
+      lbl.textContent = STRINGS[s].label;
+      tabGridEl.appendChild(lbl);
+
+      for (let c = 0; c < tabColsCount; c++) {
+        const cell = document.createElement('div');
+        const val = tabGridData[s][c];
+        const prevVal = c > 0 ? tabGridData[s][c - 1] : null;
+        const isTrailing = prevVal !== null && prevVal >= 10 && val === null;
+        const isSel = selectedCell && selectedCell.s === s && selectedCell.c === c;
+
+        cell.className = 'g-cell' +
+          (c === playheadCol ? ' playhead' : '') +
+          (isSel ? ' selected' : '') +
+          (isTrailing ? ' trailing' : '');
+        cell.dataset.s = s;
+        cell.dataset.c = c;
+
+        if (val !== null) {
+          const badge = document.createElement('div');
+          badge.className = 'g-note' + (val >= 10 ? ' two-digit' : '');
+          badge.textContent = val;
+          cell.appendChild(badge);
+        }
+
+        cell.addEventListener('click', () => openCellEditor(s, c, cell));
+        tabGridEl.appendChild(cell);
+      }
+    }
+  }
+
+  function openCellEditor(s, c, cellEl) {
+    selectedCell = { s, c };
+    const current = tabGridData[s][c];
+    if (current !== null) {
+      playNote(s, current, false);
+    }
+
+    // Replace cell content with inline input
+    cellEl.classList.add('selected');
+    cellEl.innerHTML = '';
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.maxLength = 2;
+    inp.className = 'g-inline-input';
+    inp.value = current !== null ? String(current) : '';
+    cellEl.appendChild(inp);
+    inp.focus();
+    inp.select();
+
+    let committed = false;
+    const commit = (moveDelta = null) => {
+      if (committed) return;
+      committed = true;
+      const raw = inp.value.trim();
+      if (raw === '') {
+        tabGridData[s][c] = null;
+      } else {
+        const num = Number(raw);
+        if (!Number.isNaN(num) && num >= 0 && num <= 24) {
+          tabGridData[s][c] = num;
+          // Clear trailing overlap if 2-digit fret
+          if (num >= 10 && c + 1 < tabColsCount && tabGridData[s][c + 1] !== null) {
+            // Keep or shift? Keep existing if user explicitly placed it; otherwise clean
+          }
+          playNote(s, num, false);
+        }
+      }
+      syncTextareaFromGrid();
+
+      if (moveDelta) {
+        const ns = Math.max(0, Math.min(5, s + moveDelta.ds));
+        const nc = Math.max(0, Math.min(tabColsCount - 1, c + moveDelta.dc));
+        selectedCell = { s: ns, c: nc };
+        renderVisualGrid();
+        const nextCell = tabGridEl.querySelector(`.g-cell[data-s="${ns}"][data-c="${nc}"]`);
+        if (nextCell) openCellEditor(ns, nc, nextCell);
+      } else {
+        renderVisualGrid();
+      }
+    };
+
+    inp.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commit();
+      } else if (e.key === 'Escape') {
+        committed = true;
+        renderVisualGrid();
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        commit({ ds: 0, dc: e.shiftKey ? -1 : 1 });
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        commit({ ds: 0, dc: 1 });
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        commit({ ds: 0, dc: -1 });
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        commit({ ds: 1, dc: 0 });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        commit({ ds: -1, dc: 0 });
+      } else if ((e.key === 'Backspace' || e.key === 'Delete') && inp.value === '') {
+        e.preventDefault();
+        tabGridData[s][c] = null;
+        commit();
+      }
+    });
+
+    inp.addEventListener('blur', () => commit());
+  }
+
+  function recordNoteIntoTab(stringIdx, fret) {
+    // Find last occupied column across all strings
+    let lastUsedCol = -1;
+    for (let c = tabColsCount - 1; c >= 0; c--) {
+      if (tabGridData.some(row => row[c] !== null)) {
+        lastUsedCol = c;
+        break;
+      }
+    }
+    const prevVal = lastUsedCol >= 0 ? tabGridData.find(r => r[lastUsedCol] !== null) : null;
+    const stepGap = lastUsedCol < 0 ? 1 : (tabGridData.some((r, idx) => r[lastUsedCol] !== null && r[lastUsedCol] >= 10) ? 3 : 2);
+    const targetCol = lastUsedCol < 0 ? 1 : lastUsedCol + stepGap;
+
+    while (targetCol + 2 >= tabColsCount) {
+      for (let s = 0; s < 6; s++) tabGridData[s].push(null);
+      tabColsCount++;
+    }
+    tabGridData[stringIdx][targetCol] = fret;
+    syncTextareaFromGrid();
+    renderVisualGrid();
+    gridScrollEl.scrollLeft = Math.max(0, (targetCol * 24) - gridScrollEl.clientWidth + 120);
+  }
+
+  // ================= PLAYBACK ENGINE =================
+  function updatePlayheadVisual(col) {
+    playheadCol = col;
+    tabGridEl.querySelectorAll('.playhead').forEach(el => el.classList.remove('playhead'));
+    if (col < 0) return;
+
+    tabGridEl.querySelectorAll(`[data-col="${col}"], [data-c="${col}"]`).forEach(el => {
+      el.classList.add('playhead');
+    });
+
+    // Keep playhead comfortably scrolled horizontally without jumping page vertically
+    const targetX = col * 24;
+    const viewLeft = gridScrollEl.scrollLeft;
+    const viewRight = viewLeft + gridScrollEl.clientWidth - 60;
+    if (targetX < viewLeft || targetX > viewRight) {
+      gridScrollEl.scrollLeft = Math.max(0, targetX - gridScrollEl.clientWidth * 0.3);
+    }
+  }
+
+  function startPlayback(startCol = 0) {
+    initAudio();
+    stopPlayback(false);
+
+    // Find last column that actually has a note
+    let lastNoteCol = -1;
+    for (let c = tabColsCount - 1; c >= 0; c--) {
+      if (tabGridData.some(row => row[c] !== null)) {
+        lastNoteCol = c;
+        break;
+      }
+    }
+    if (lastNoteCol < 0) return;
+
+    isPlaying = true;
+    playTabBtn.classList.add('hidden');
+    stopTabBtn.classList.remove('hidden');
+
+    let col = startCol;
+    const tick = () => {
+      if (!isPlaying) return;
+
+      if (col > lastNoteCol) {
+        if (loopTab) {
+          col = 0;
+        } else {
+          stopPlayback(true);
+          return;
+        }
+      }
+
+      updatePlayheadVisual(col);
+      for (let s = 0; s < 6; s++) {
+        const fret = tabGridData[s][col];
+        if (fret !== null && fret !== undefined) {
+          activeString = s;
+          playNote(s, fret, false);
+        }
+      }
+
+      col++;
+      const colMs = Math.round(6600 / bpm); // ~57ms/col at 115 BPM => 172ms per 3-col step
+      playTimer = setTimeout(tick, colMs);
+    };
+
+    tick();
+  }
+
+  function stopPlayback(clearHead = true) {
+    isPlaying = false;
+    clearTimeout(playTimer);
+    playTimer = null;
+    playTabBtn.classList.remove('hidden');
+    stopTabBtn.classList.add('hidden');
+    if (clearHead) updatePlayheadVisual(-1);
+  }
+
+  // ================= BUILD FRETBOARD UI =================
+  function buildFretboard() {
+    STRINGS.forEach((s, i) => {
+      const pill = document.createElement('div');
+      pill.className = 'str-pill' + (i === activeString ? ' active' : '');
+      pill.innerHTML = `<span class="s-name">${s.label}</span><span class="s-key">${s.keyHint}</span>`;
+      pill.addEventListener('click', () => {
+        activeString = i;
+        updateHUD(activeString);
+      });
+      stringPillsEl.appendChild(pill);
+    });
+
+    STRINGS.forEach((s, sIdx) => {
+      const row = document.createElement('div');
+      row.className = `string-row s${sIdx}` + (sIdx === activeString ? ' string-active' : '');
+      row.dataset.string = sIdx;
+
+      for (let f = 0; f <= 24; f++) {
+        const cell = document.createElement('div');
+        cell.className = 'fret-cell' + (f === 0 ? ' nut' : '');
+        cell.dataset.string = sIdx;
+        cell.dataset.fret = f;
+
+        if (INLAY_FRETS.has(f)) {
+          if (f === 12 || f === 24) {
+            if (sIdx === 1 || sIdx === 4) {
+              const dot = document.createElement('div');
+              dot.className = 'inlay';
+              cell.appendChild(dot);
+            }
+          } else if (sIdx === 2) {
+            const dot = document.createElement('div');
+            dot.className = 'inlay';
+            cell.appendChild(dot);
+          }
+        }
+
+        const noteDot = document.createElement('div');
+        noteDot.className = 'note-dot';
+        noteDot.textContent = f;
+        cell.appendChild(noteDot);
+
+        cell.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          activeString = sIdx;
+          playNote(sIdx, f, true);
+        });
+
+        row.appendChild(cell);
+      }
+      fretGridEl.appendChild(row);
+    });
+
+    for (let f = 0; f <= 24; f++) {
+      const num = document.createElement('div');
+      num.className = 'fret-num' + (INLAY_FRETS.has(f) ? ' hi' : '');
+      num.textContent = f === 0 ? 'OPEN' : f;
+      fretNumbersEl.appendChild(num);
+    }
+  }
+
+  // ================= KEYBOARD COMBO ENGINE =================
+  function parseDigitCode(code, key) {
+    if (code.startsWith('Digit')) return Number(code.slice(5));
+    if (code.startsWith('Numpad') && code.length === 7 && code[6] >= '0' && code[6] <= '9') {
+      return Number(code[6]);
+    }
+    if (key >= '0' && key <= '9') return Number(key);
+    return null;
+  }
+
+  window.addEventListener('keydown', (e) => {
+    const tag = e.target.tagName;
+    if (tag === 'TEXTAREA' || (tag === 'INPUT' && e.target.type !== 'range') || tag === 'SELECT') {
+      return;
+    }
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+
+    const code = e.code;
+
+    if (code === 'KeyE') {
+      e.preventDefault();
+      activeString = e.shiftKey ? 5 : 0;
+      document.getElementById('kbdE').classList.add('lit');
+      updateHUD(activeString);
+      return;
+    }
+    if (code === 'KeyB') { activeString = 1; updateHUD(activeString); return; }
+    if (code === 'KeyG') { activeString = 2; updateHUD(activeString); return; }
+    if (code === 'KeyD') { activeString = 3; updateHUD(activeString); return; }
+    if (code === 'KeyA') { activeString = 4; updateHUD(activeString); return; }
+    if (code === 'KeyL') { activeString = 5; updateHUD(activeString); return; }
+
+    if (code === 'Space') {
+      e.preventDefault();
+      playNote(activeString, lastFret, true);
+      return;
+    }
+    if (code === 'KeyX') { muteAllStrings(); return; }
+    if (code === 'KeyM') {
+      palmMute = !palmMute;
+      document.getElementById('palmMuteBtn').classList.toggle('active', palmMute);
+      return;
+    }
+
+    const digit = parseDigitCode(code, e.key);
+    if (digit === null) return;
+    e.preventDefault();
+
+    if (digit === 9) document.getElementById('kbd9').classList.add('lit');
+
+    if (heldTens !== null) {
+      const combined = heldTens * 10 + digit;
+      tensUsedAsModifier = true;
+      if (pendingSeqTimer) {
+        clearTimeout(pendingSeqTimer);
+        pendingSeqTimer = null;
+        pendingSeqTens = null;
+      }
+      if (combined <= 24) playNote(activeString, combined, true);
+      return;
+    }
+
+    if (pendingSeqTens !== null) {
+      clearTimeout(pendingSeqTimer);
+      pendingSeqTimer = null;
+      const combined = pendingSeqTens * 10 + digit;
+      pendingSeqTens = null;
+      if (combined <= 24) {
+        playNote(activeString, combined, true);
+        return;
+      }
+    }
+
+    if (heldZero && (digit === 1 || digit === 2)) {
+      playNote(activeString, digit, true);
+      return;
+    }
+
+    if (digit === 0) {
+      heldZero = true;
+      playNote(activeString, 0, true);
+      return;
+    }
+
+    if (digit === 1 || digit === 2) {
+      heldTens = digit;
+      tensUsedAsModifier = false;
+      highlightTensZone();
+      updateHUD(activeString);
+      return;
+    }
+
+    playNote(activeString, digit, true);
+  });
+
+  window.addEventListener('keyup', (e) => {
+    const tag = e.target.tagName;
+    if (tag === 'TEXTAREA' || (tag === 'INPUT' && e.target.type !== 'range')) return;
+
+    const code = e.code;
+    if (code === 'KeyE') document.getElementById('kbdE').classList.remove('lit');
+
+    const digit = parseDigitCode(code, e.key);
+    if (digit === null) return;
+
+    if (digit === 9) document.getElementById('kbd9').classList.remove('lit');
+    if (digit === 0) heldZero = false;
+
+    if (heldTens === digit) {
+      const wasUsed = tensUsedAsModifier;
+      const releasedDigit = heldTens;
+      heldTens = null;
+      highlightTensZone();
+
+      if (!wasUsed) {
+        pendingSeqTens = releasedDigit;
+        pendingSeqTimer = setTimeout(() => {
+          const f = pendingSeqTens;
+          pendingSeqTens = null;
+          pendingSeqTimer = null;
+          if (f !== null) playNote(activeString, f, true);
+        }, 165);
+      }
+    }
+  });
+
+  // ================= UI LISTENERS =================
+  [driveSlider, toneSlider, reverbSlider, volumeSlider].forEach(sl => {
+    sl.addEventListener('input', updateAmpParams);
+  });
+
+  document.querySelectorAll('.presets [data-preset]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.presets [data-preset]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const p = presets[btn.dataset.preset];
+      driveSlider.value = p.drive;
+      toneSlider.value = p.tone;
+      reverbSlider.value = p.reverb;
+      volumeSlider.value = p.volume;
+      updateAmpParams();
+      btn.blur();
+    });
+  });
+
+  document.getElementById('palmMuteBtn').addEventListener('click', (e) => {
+    palmMute = !palmMute;
+    e.currentTarget.classList.toggle('active', palmMute);
+    e.currentTarget.blur();
+  });
+
+  // View Switcher
+  document.querySelectorAll('.view-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.view;
+      gridWrap.classList.toggle('hidden', v === 'text');
+      asciiWrap.classList.toggle('hidden', v === 'grid');
+      btn.blur();
+    });
+  });
+
+  // Live ASCII Editing & Pasting
+  tabTextarea.addEventListener('input', () => {
+    stopPlayback(true);
+    setGridFromAscii(tabTextarea.value, false);
+  });
+
+  playTabBtn.addEventListener('click', (e) => { e.currentTarget.blur(); startPlayback(0); });
+  stopTabBtn.addEventListener('click', (e) => { e.currentTarget.blur(); stopPlayback(true); });
+
+  loopBtn.addEventListener('click', (e) => {
+    loopTab = !loopTab;
+    e.currentTarget.classList.toggle('active', loopTab);
+    e.currentTarget.blur();
+  });
+
+  bpmSlider.addEventListener('input', () => {
+    bpm = Number(bpmSlider.value);
+    bpmVal.textContent = bpm + ' BPM';
+  });
+
+  recBtn.addEventListener('click', (e) => {
+    recordKeys = !recordKeys;
+    recBtn.classList.toggle('active', recordKeys);
+    recBtn.textContent = `Rec Keys: ${recordKeys ? 'ON' : 'OFF'}`;
+    e.currentTarget.blur();
+  });
+
+  document.getElementById('addColsBtn').addEventListener('click', (e) => {
+    for (let s = 0; s < 6; s++) tabGridData[s].push(...new Array(8).fill(null));
+    tabColsCount += 8;
+    syncTextareaFromGrid();
+    renderVisualGrid();
+    gridScrollEl.scrollLeft = gridScrollEl.scrollWidth;
+    e.currentTarget.blur();
+  });
+
+  document.getElementById('importFocusBtn').addEventListener('click', () => {
+    // Ensure ASCII box is visible, select all so user can Ctrl+V immediately
+    if (asciiWrap.classList.contains('hidden')) {
+      document.querySelector('.view-tab[data-view="both"]').click();
+    }
+    tabTextarea.focus();
+    tabTextarea.select();
+  });
+
+  const fileInput = document.getElementById('fileInput');
+  document.getElementById('uploadFileBtn').addEventListener('click', (e) => {
+    e.currentTarget.blur();
+    fileInput.click();
+  });
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      stopPlayback(true);
+      setGridFromAscii(String(reader.result || ''), true);
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
+  });
+
+  document.getElementById('sampleRiffBtn').addEventListener('click', (e) => {
+    stopPlayback(true);
+    setGridFromAscii(DEFAULT_RIFF, true);
+    e.currentTarget.blur();
+  });
+
+  document.getElementById('copyTabBtn').addEventListener('click', (e) => {
+    navigator.clipboard?.writeText(tabTextarea.value);
+    const btn = e.currentTarget;
+    const old = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = old, 1000);
+    btn.blur();
+  });
+
+  document.getElementById('clearTabBtn').addEventListener('click', (e) => {
+    stopPlayback(true);
+    tabColsCount = 32;
+    tabGridData = Array.from({ length: 6 }, () => new Array(32).fill(null));
+    syncTextareaFromGrid();
+    renderVisualGrid();
+    e.currentTarget.blur();
+  });
+
+  // Init
+  buildFretboard();
+  setGridFromAscii(DEFAULT_RIFF, true);
+})();
+</script>
+</body>
+</html>
